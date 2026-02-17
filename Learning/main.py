@@ -19,7 +19,8 @@ def main(vertices : list):
     print(f"The min degree of the graph {graph.get_gamma_degree()}")
     print(f"The max degree of the graph {graph.get_delta_degree()}")
     print(f"There are {graph.count_same_degree(4)} vertex with the same degree")
-
+    
+    graph.show_degree_sequence()
             
 def is_prime(n):
     if n <= 1:
