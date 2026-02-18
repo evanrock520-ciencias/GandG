@@ -154,7 +154,7 @@ class Graph:
             matrix,
             columns=[v.value for v in self.vertices],
             index=[v.value for v in self.vertices]
-        )
+        )           
 
     def update_degree_sequence(self):
         self.degree_sequence = sorted(self.degrees.values(), reverse=True)
