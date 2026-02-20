@@ -167,16 +167,19 @@ class Graph:
         order = self.get_order()
         matrix = np.zeros((order, order))
 
-        for i, vtx in enumerate(self.vertices):
-            for j, utx in enumerate(self.vertices):
-                if utx in vtx.adj:
-                    matrix[i][j] = 1
+        index = {vtx: idx for idx, vtx in enumerate(self.vertices)}
+
+        for vtx in self.vertices:
+            idx = index[vtx]
+            for utx in vtx.adj:
+                jdx = index[utx]
+                matrix[idx][jdx] = 1
 
         return pd.DataFrame(
             matrix,
             columns=[v.value for v in self.vertices],
             index=[v.value for v in self.vertices]
-        )           
+        )        
 
     def update_degree_sequence(self):
         self.degree_sequence = sorted(self.degrees.values(), reverse=True)
