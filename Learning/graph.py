@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from itertools import batched
 
 from vertex import Vertex
 from edge import Edge
@@ -21,7 +22,7 @@ class Graph:
         edge = Edge(self.vertices[idx1], self.vertices[idx2])
         
         if edge in self.edges:
-            print(f"The edge {edge.to_string()} is alredy in edges")
+            # print(f"The edge {edge.to_string()} is alredy in edges")
             return
         
         self.vertices[idx1].add_adj(self.vertices[idx2])
@@ -105,7 +106,16 @@ class Graph:
                         return False
         return True
     
-
+    def is_walk(self, vertices : list) -> bool:
+        for vtx in vertices:
+            if vtx not in self.vertices:
+                return False
+            
+        for idx in range(len(vertices) - 1):
+            if vertices[idx + 1] not in vertices[idx].adj:
+                return False
+            
+        return True
     
     def delete_vertices(self, vertices_to_delete: list):
         for vtx in vertices_to_delete:
@@ -140,6 +150,18 @@ class Graph:
                     complement.add_connection(i, j)
                     
         return complement
+    
+    def inducted_by(self, vertices : list) -> Graph:
+        edges = []
+        for vtx in vertices:
+            if vtx not in self.vertices:
+                raise ValueError()
+            
+        for vtx in vertices:
+            for adj in vtx.adj:
+                edges.append(Edge(vtx, adj))
+                
+        return Graph(vertices, edges)
     
     def build_adj_matrix(self) -> pd.DataFrame:
         order = self.get_order()
