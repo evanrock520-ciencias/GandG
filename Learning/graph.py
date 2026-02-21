@@ -106,6 +106,30 @@ class Graph:
                         return False
         return True
     
+    def bipartite_inducted_by(self, x_vertices: list, y_vertices: list) -> Graph:
+        all_selected = set(x_vertices) | set(y_vertices)
+        for vtx in all_selected:
+            if vtx not in self.vertices:
+                raise ValueError(f"The vertex {vtx.value} is not in the original graph.")
+
+        set_x = set(x_vertices)
+        set_y = set(y_vertices)
+
+        vertices = x_vertices + y_vertices
+        idxs = {vtx: i for i, vtx in enumerate(vertices)}
+        bpt_graph = Graph(vertices, [])
+
+        for vtx in vertices:
+            u_idx = idxs[vtx]
+            for adj in vtx.adj:
+                if adj in all_selected:
+                    if (vtx in set_x and adj in set_x) or (vtx in set_y and adj in set_y):
+                        raise ValueError(f"This can't be bipartite: {vtx.value} and {adj.value} are in the same set.")
+                    v_idx = idxs[adj]
+                    bpt_graph.add_connection(u_idx, v_idx)
+
+        return bpt_graph
+    
     def is_walk(self, vertices : list) -> bool:
         for vtx in vertices:
             if vtx not in self.vertices:
