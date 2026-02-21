@@ -8,6 +8,9 @@ class Edge:
     def to_string(self) -> str:
         return f"({self.vtx1.value}, {self.vtx2.value})"
     
+    def __repr__(self):
+        return self.to_string()
+    
     def __eq__(self, other):
         if not isinstance(other, Edge):
             return False

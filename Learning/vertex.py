@@ -9,6 +9,9 @@ class Vertex:
     def get_degree(self):
         return len(self.adj)
     
+    def __repr__(self):
+        return f"V{self.value}"
+    
     def __eq__(self, other):
         return isinstance(other, Vertex) and self.value == other.value
 
