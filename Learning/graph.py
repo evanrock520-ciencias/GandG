@@ -14,11 +14,26 @@ class Graph:
         self.update_degree_sequence()
         
     def add_vertex(self, vtx : Vertex):
+        """
+        Add a vertex to the graph.
+        
+        Args:
+            vtx: The vertex we want to add to the graph.
+            
+        """
         self.vertices.append(vtx)
         self.degrees[vtx] = vtx.get_degree()
         self.update_degree_sequence()
         
     def add_connection(self, idx1, idx2):
+        """
+        Creates an edge with 2 vertex.
+        
+        Args:
+                idx1: The index of the first vertex in self.vertices
+                idx2: The index of the second vertex in self.vertices
+            
+        """
         edge = Edge(self.vertices[idx1], self.vertices[idx2])
         
         if edge in self.edges:
@@ -35,21 +50,50 @@ class Graph:
         self.update_degree_sequence()
         
     def get_order(self) -> int:
+        """
+        Returns:
+            int: The order of the graph. How many vertex there are in the graph.
+        """
         return len(self.vertices)
     
     def get_size(self) -> int:
+        """
+        Returns:
+            int: The size of the graph. How many edges there are in the graph.
+        """
         return len(self.edges)
     
     def get_total_degree(self) -> int:
+        """
+        Returns:
+            int: The sum of the degree sequence.
+        """
         return sum(self.degree_sequence)
     
     def get_gamma_degree(self) -> int:
-        return min(self.degrees.values())
+        """
+        Returns: 
+            int: The min degree in the degree sequence of the graph.
+        """
+        return min(self.degree_sequence)
     
     def get_delta_degree(self) -> int:
-        return max(self.degrees.values())
+        """
+        Returns:
+            int: The max degree in the degree sequence of the graph.
+        """
+        return max(self.degree_sequence)
     
-    def is_subgraph(self, graph : Graph):
+    def is_subgraph(self, graph : Graph) -> bool:
+        """
+        Determines if the given graph is a subgraph of this graph.
+        
+        Args: 
+            graph: The given graph.
+        
+        Returns:
+            bool: If the given graph is a subgraph of this graph.
+        """
         for vtx in graph.vertices:
             if vtx not in self.vertices:
                 return False
@@ -142,6 +186,13 @@ class Graph:
         return True
     
     def delete_vertices(self, vertices_to_delete: list):
+        """
+        Removes the specified vertices from the graph, along with their 
+        incident edges.
+
+        Args:
+            vertices_to_delete: A list of vertices to be removed from this graph.
+        """
         for vtx in vertices_to_delete:
             if vtx in self.vertices:
                 for neighbor in vtx.adj:
