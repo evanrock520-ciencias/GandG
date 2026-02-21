@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from itertools import batched
+from itertools import combinations
 
 from vertex import Vertex
 from edge import Edge
@@ -159,10 +159,28 @@ class Graph:
             
         for vtx in vertices:
             for adj in vtx.adj:
-                edges.append(Edge(vtx, adj))
+                if adj in vertices:
+                    edges.append(Edge(vtx, adj))
                 
         return Graph(vertices, edges)
     
+    def lines_graph(self) -> Graph:
+        line_vertices = [Vertex(edge, set()) for edge in self.edges]
+        graph = Graph(line_vertices, [])
+        
+        grade = len(line_vertices)
+        
+        for idx in range(grade):
+            for jdx in range(idx + 1, grade):
+                vtx_i = line_vertices[idx]
+                vtx_j = line_vertices[jdx]
+                
+                if vtx_i.value.is_adj(vtx_j.value):
+                    graph.add_connection(idx, jdx)
+                    
+        return graph
+
+        
     def build_adj_matrix(self) -> pd.DataFrame:
         order = self.get_order()
         matrix = np.zeros((order, order))

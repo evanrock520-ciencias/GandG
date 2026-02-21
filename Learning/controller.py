@@ -1,4 +1,6 @@
 class Controler:
+    
+    @staticmethod
     def is_graphicable(self, degrees: tuple) -> bool:
         if sum(degrees) % 2 != 0:
             return False
@@ -20,7 +22,7 @@ class Controler:
             return False
         
         for i in range(higher):
-            degrees[i] -= 1
+            degrees[i] -= 1               
             if degrees[i] < 0:
                 return False
             

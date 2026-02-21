@@ -16,3 +16,12 @@ class Edge:
             (self.vtx1 == other.vtx1 and self.vtx2 == other.vtx2) or
             (self.vtx1 == other.vtx2 and self.vtx2 == other.vtx1)
         )
+    
+    def __hash__(self):
+        return hash(frozenset([self.vtx1, self.vtx2]))
+        
+    def __contains__(self, vtx):
+        return vtx == self.vtx1 or vtx == self.vtx2
+        
+    def is_adj(self, edge : Edge):
+        return (self.vtx1 in edge) != (self.vtx2 in edge)
