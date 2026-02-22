@@ -1,3 +1,5 @@
+import copy
+
 class Vertex:
     def __init__(self, value, adj : set):
         self.value = value
@@ -18,3 +20,9 @@ class Vertex:
     def __hash__(self):
         return hash(self.value)
     
+    def __deepcopy__(self, memo):
+        new_vtx = Vertex(copy.deepcopy(self.value, memo), set())
+        memo[id(self)] = new_vtx
+        new_vtx.adj = {memo.get(id(a), a) for a in self.adj}
+        return new_vtx
+        

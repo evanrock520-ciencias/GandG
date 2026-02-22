@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from itertools import combinations
+import copy
 
 from vertex import Vertex
 from edge import Edge
@@ -185,6 +186,26 @@ class Graph:
             
         return True
     
+    def is_cycle(self, vertices: list):
+        if not self.is_walk(vertices):
+            return False
+        
+        if vertices[0] != vertices[-1]:
+            return False
+
+        return len(vertices[:-1]) == len(set(vertices[:-1]))
+    
+    def is_trail(self, vertices: list) -> bool:
+        if not self.is_walk(vertices):
+            return False
+        edges = [Edge(vertices[idx], vertices[idx + 1]) for idx in range(len(vertices) - 1)]
+        return len(edges) == len(set(edges))
+
+    def is_path(self, vertices: list) -> bool:
+        if not self.is_walk(vertices):
+            return False
+        return len(vertices) == len(set(vertices)) 
+    
     def delete_vertices(self, vertices_to_delete: list):
         """
         Removes the specified vertices from the graph, along with their 
@@ -195,7 +216,8 @@ class Graph:
         """
         for vtx in vertices_to_delete:
             if vtx in self.vertices:
-                for neighbor in vtx.adj:
+                neighbors = list(vtx.adj)
+                for neighbor in neighbors:
                     if neighbor in self.degrees:
                         self.degrees[neighbor] -= 1
                     if vtx in neighbor.adj:
@@ -212,7 +234,7 @@ class Graph:
         self.update_degree_sequence()
     
     def build_complement(self) -> Graph:
-        cmp_vertices = self.vertices.copy()
+        cmp_vertices = copy.deepcopy(self.vertices)
         complement = Graph(cmp_vertices, [])
         for i, vtx in enumerate(cmp_vertices):
             for j, other in enumerate(cmp_vertices):
@@ -226,27 +248,34 @@ class Graph:
                     
         return complement
     
-    def inducted_by(self, vertices : list) -> Graph:
-        edges = []
+    def inducted_by(self, vertices: list) -> Graph:
         for vtx in vertices:
             if vtx not in self.vertices:
                 raise ValueError()
-            
+
+        edges = set()
         for vtx in vertices:
             for adj in vtx.adj:
                 if adj in vertices:
-                    edges.append(Edge(vtx, adj))
-                
-        return Graph(vertices, edges)
-    
+                    edges.add(Edge(vtx, adj))
+
+        copied = {vtx: copy.deepcopy(vtx) for vtx in vertices}
+        for original, copy_vtx in copied.items():
+            copy_vtx.adj = {copied[a] for a in original.adj if a in copied}
+
+        new_vertices = list(copied.values())
+        new_edges = [Edge(copied[edg.vtx1], copied[edg.vtx2]) for edg in edges]
+
+        return Graph(new_vertices, new_edges)
+        
     def lines_graph(self) -> Graph:
         line_vertices = [Vertex(edge, set()) for edge in self.edges]
         graph = Graph(line_vertices, [])
         
-        grade = len(line_vertices)
+        degree = len(line_vertices)
         
-        for idx in range(grade):
-            for jdx in range(idx + 1, grade):
+        for idx in range(degree):
+            for jdx in range(idx + 1, degree):
                 vtx_i = line_vertices[idx]
                 vtx_j = line_vertices[jdx]
                 
