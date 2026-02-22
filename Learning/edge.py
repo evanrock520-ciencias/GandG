@@ -25,6 +25,10 @@ class Edge:
         
     def __contains__(self, vtx):
         return vtx == self.vtx1 or vtx == self.vtx2
-        
+    
+    def __iter__(self):
+        yield self.vtx1
+        yield self.vtx2
+            
     def is_adj(self, edge : Edge):
         return (self.vtx1 in edge) != (self.vtx2 in edge)

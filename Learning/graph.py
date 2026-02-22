@@ -287,7 +287,7 @@ class Graph:
         
     def build_adj_matrix(self) -> pd.DataFrame:
         order = self.get_order()
-        matrix = np.zeros((order, order))
+        matrix = np.zeros((order, order), dtype=int)
 
         index = {vtx: idx for idx, vtx in enumerate(self.vertices)}
 
@@ -299,9 +299,28 @@ class Graph:
 
         return pd.DataFrame(
             matrix,
-            columns=[v.value for v in self.vertices],
-            index=[v.value for v in self.vertices]
+            columns=[vtx.value for vtx in self.vertices],
+            index=[vtx.value for vtx in self.vertices]
         )        
+        
+    def build_inc_matrix(self) -> pd.DataFrame:
+        order = self.get_order()
+        size = self.get_size()
+
+        matrix = np.zeros((order, size), dtype=int)
+
+        vtx_index = {vtx: i for i, vtx in enumerate(self.vertices)}
+
+        for eidx, edge in enumerate(self.edges):
+            for vtx in edge:  
+                vidx = vtx_index[vtx]
+                matrix[vidx, eidx] = 1
+
+        return pd.DataFrame(
+            matrix,
+            columns=[str(edge) for edge in self.edges],
+            index=[vtx.value for vtx in self.vertices]
+        )
 
     def update_degree_sequence(self):
         self.degree_sequence = sorted(self.degrees.values(), reverse=True)
