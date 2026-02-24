@@ -132,6 +132,10 @@ class Graph:
             
         return True
     
+    def is_complete(self):
+        order = self.get_order()
+        return self.get_size() == (order * (order - 1)) / 2
+    
     def is_bipartite(self):
         color = {}
         for start in self.vertices:
@@ -206,6 +210,26 @@ class Graph:
             return False
         return len(vertices) == len(set(vertices)) 
     
+    def is_connected(self):
+        if len(self.vertices) == 0:
+            return True
+        
+        visited = set()
+        queue = [self.vertices[0]]
+        visited.add(self.vertices[0])
+        
+        while queue:
+            vtx = queue.pop(0)
+            for adj in vtx.adj:
+                if adj not in visited:
+                    visited.add(adj)
+                    queue.append(adj)
+                    
+        return len(visited) == len(self.vertices)
+    
+    def is_unconnected(self):
+        return not self.is_connected()
+    
     def delete_vertices(self, vertices_to_delete: list):
         """
         Removes the specified vertices from the graph, along with their 
@@ -227,12 +251,27 @@ class Graph:
                 self.degrees.pop(vtx, None)
                 
                 for edge in self.edges[:]:
-                    if edge.vtx1 == vtx or edge.vtx2 == vtx:
+                    if vtx in edge:
                         print(f"Deleting {edge.to_string()}")
                         self.edges.remove(edge)
                         
         self.update_degree_sequence()
-    
+        
+    def delete_edges(self, edges_to_delete : list):
+        for edge in edges_to_delete:
+            if edge in self.edges:
+                self.remove_edge(edge)
+                
+    def remove_edge(self, edge : Edge):
+        self.degrees[edge.vtx1] -= 1
+        self.degrees[edge.vtx2] -= 1
+                
+        edge.vtx1.adj.remove(edge.vtx2)
+        edge.vtx2.adj.remove(edge.vtx1)
+                
+        self.edges.remove(edge)
+        self.update_degree_sequence()
+            
     def build_complement(self) -> Graph:
         cmp_vertices = copy.deepcopy(self.vertices)
         complement = Graph(cmp_vertices, [])
@@ -283,7 +322,6 @@ class Graph:
                     graph.add_connection(idx, jdx)
                     
         return graph
-
         
     def build_adj_matrix(self) -> pd.DataFrame:
         order = self.get_order()
@@ -321,6 +359,36 @@ class Graph:
             columns=[str(edge) for edge in self.edges],
             index=[vtx.value for vtx in self.vertices]
         )
+        
+    def distance_between(self, vtx: Vertex, utx: Vertex) -> int:
+        if vtx == utx:
+            return 0
+        
+        visited = {vtx}
+        queue = [(vtx, 0)]
+        
+        while queue:
+            wtx, distance = queue.pop(0)
+            for adj in wtx.adj:
+                if adj == utx:
+                    return distance + 1
+                
+                if adj not in visited:
+                    visited.add(adj)
+                    queue.append((adj, distance + 1))
+        
+        return float('inf')
+    
+    def diameter(self):
+        if not self.is_connected():
+            return float('inf')
+        
+        max_dist = 0
+        for idx, vtx in enumerate(self.vertices):
+            for utx in self.vertices[idx + 1:]:
+                max_dist = max(max_dist, self.distance_between(vtx, utx))
+        
+        return max_dist
 
     def update_degree_sequence(self):
         self.degree_sequence = sorted(self.degrees.values(), reverse=True)
@@ -331,6 +399,9 @@ class Graph:
             if vtx_dg == desired_degree:
                 counter += 1
         return counter
+    
+    def get_vertex(self, value):
+        return next((vtx for vtx in self.vertices if vtx.value == value), None)
         
     def show_edges(self):
         for edge in self.edges:

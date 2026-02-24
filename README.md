@@ -12,3 +12,5 @@ A **graph** $G$ is an ordered pair $(V(G), E(G))$ where:
 - $V(G)$ is a non-empty set of **vertices**.
 - $E(G)$ is a set of **edges**, each being an unordered pair $\{u, v\}$ of distinct vertices from $V(G)$.
 
+
+
