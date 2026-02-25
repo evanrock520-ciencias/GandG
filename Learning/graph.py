@@ -419,6 +419,16 @@ class Graph:
     
     def get_vertex(self, value):
         return next((vtx for vtx in self.vertices if vtx.value == value), None)
+    
+    def is_cutoff_point(self, vtx: Vertex) -> bool:
+        if not self.is_connected():
+            return False
+        cutted_graph = self.clone()
+        cutted_graph.delete_vertices([cutted_graph.vertices[self.vertices.index(vtx)]])
+        return not cutted_graph.is_connected()
+        
+    def clone(self) -> Graph:
+        return copy.deepcopy(self)
         
     def show_edges(self):
         for edge in self.edges:
