@@ -8,11 +8,41 @@ from edge import Edge
 
 class Graph:
     def __init__(self, vertices : list, edges : list):
-        self.vertices = vertices
-        self.edges = edges
-        self.degrees = {vtx: vtx.get_degree() for vtx in vertices}
+        self._vertices = vertices
+        self._edges = edges
+        
+        for edge in self._edges:
+            if edge.vtx1 not in self._vertices or edge.vtx2 not in self._vertices:
+                raise ValueError("There are edges with invalid vertices.")
+    
+        self._degrees = {vtx: vtx.get_degree() for vtx in vertices}
         self.degree_sequence = None
-        self.update_degree_sequence()
+        self._update_degree_sequence()
+        
+    @property
+    def vertices(self):
+        return list(self._vertices)
+    
+    @property
+    def edges(self):
+        return list(self._edges)
+    
+    @property
+    def degrees(self):
+        return list(self._degrees)
+    
+    def _update_degree_sequence(self):
+        self.degree_sequence = sorted(self._degrees.values(), reverse=True)
+        
+    def _remove_edge(self, edge : Edge):
+        self._degrees[edge.vtx1] -= 1
+        self._degrees[edge.vtx2] -= 1
+                
+        edge.vtx1.adj.remove(edge.vtx2)
+        edge.vtx2.adj.remove(edge.vtx1)
+                
+        self._edges.remove(edge)
+        self._update_degree_sequence()
         
     def add_vertex(self, vtx : Vertex):
         """
@@ -22,9 +52,9 @@ class Graph:
             vtx: The vertex we want to add to the graph.
             
         """
-        self.vertices.append(vtx)
-        self.degrees[vtx] = vtx.get_degree()
-        self.update_degree_sequence()
+        self._vertices.append(vtx)
+        self._degrees[vtx] = vtx.get_degree()
+        self._update_degree_sequence()
         
     def add_connection(self, idx1, idx2):
         """
@@ -35,34 +65,34 @@ class Graph:
                 idx2: The index of the second vertex in self.vertices
             
         """
-        edge = Edge(self.vertices[idx1], self.vertices[idx2])
+        edge = Edge(self._vertices[idx1], self._vertices[idx2])
         
-        if edge in self.edges:
+        if edge in self._edges:
             # print(f"The edge {edge.to_string()} is alredy in edges")
             return
         
-        self.vertices[idx1].add_adj(self.vertices[idx2])
-        self.vertices[idx2].add_adj(self.vertices[idx1])
+        self._vertices[idx1].add_adj(self._vertices[idx2])
+        self._vertices[idx2].add_adj(self._vertices[idx1])
         
-        self.degrees[self.vertices[idx1]] += 1
-        self.degrees[self.vertices[idx2]] += 1
+        self._degrees[self._vertices[idx1]] += 1
+        self._degrees[self._vertices[idx2]] += 1
         
-        self.edges.append(edge)
-        self.update_degree_sequence()
+        self._edges.append(edge)
+        self._update_degree_sequence()
         
     def get_order(self) -> int:
         """
         Returns:
             int: The order of the graph. How many vertex there are in the graph.
         """
-        return len(self.vertices)
+        return len(self._vertices)
     
     def get_size(self) -> int:
         """
         Returns:
             int: The size of the graph. How many edges there are in the graph.
         """
-        return len(self.edges)
+        return len(self._edges)
     
     def get_total_degree(self) -> int:
         """
@@ -95,19 +125,19 @@ class Graph:
         Returns:
             bool: If the given graph is a subgraph of this graph.
         """
-        for vtx in graph.vertices:
-            if vtx not in self.vertices:
+        for vtx in graph._vertices:
+            if vtx not in self._vertices:
                 return False
             
-        for edge in graph.edges:
-            if edge not in self.edges:
+        for edge in graph._edges:
+            if edge not in self._edges:
                 return False
             
         return True
     
     def is_independent(self, vertices: list):
         for vtx in vertices:
-            if vtx not in self.vertices:
+            if vtx not in self._vertices:
                 return False
 
         for i in range(len(vertices)):
@@ -115,7 +145,7 @@ class Graph:
                 v = vertices[i]
                 u = vertices[j]
 
-                if Edge(v, u) in self.edges:
+                if Edge(v, u) in self._edges:
                     return False
 
         return True
@@ -137,14 +167,15 @@ class Graph:
         return self.get_size() == (order * (order - 1)) / 2
     
     def is_bipartite(self):
+        return self.get_bipartition() is not None
+    
+    def get_bipartition(self) -> tuple:
         color = {}
-        for start in self.vertices:
+        for start in self._vertices:
             if start in color:
                 continue
-            
             color[start] = 0
             queue = [start]
-
             while queue:
                 vtx = queue.pop(0)
                 for utx in vtx.adj:
@@ -152,13 +183,28 @@ class Graph:
                         color[utx] = 1 - color[vtx]
                         queue.append(utx)
                     elif color[utx] == color[vtx]:
-                        return False
+                        return None
+        
+        X = [vtx for vtx in self._vertices if color[vtx] == 0]
+        Y = [vtx for vtx in self._vertices if color[vtx] == 1]
+        return (X, Y)
+    
+    def is_bipartite_complete(self) -> bool:
+        if not self.is_bipartite():
+            return False
+        
+        X, Y = self.get_bipartition()
+        for vtx in X:
+            for utx in Y:
+                if not Edge(vtx, utx) in self._edges():
+                    return False
+                
         return True
     
     def bipartite_inducted_by(self, x_vertices: list, y_vertices: list) -> Graph:
         all_selected = set(x_vertices) | set(y_vertices)
         for vtx in all_selected:
-            if vtx not in self.vertices:
+            if vtx not in self._vertices:
                 raise ValueError(f"The vertex {vtx.value} is not in the original graph.")
 
         set_x = set(x_vertices)
@@ -181,7 +227,7 @@ class Graph:
     
     def is_walk(self, vertices : list) -> bool:
         for vtx in vertices:
-            if vtx not in self.vertices:
+            if vtx not in self._vertices:
                 return False
             
         for idx in range(len(vertices) - 1):
@@ -211,12 +257,12 @@ class Graph:
         return len(vertices) == len(set(vertices)) 
     
     def is_connected(self):
-        if len(self.vertices) == 0:
+        if len(self._vertices) == 0:
             return True
         
         visited = set()
-        queue = [self.vertices[0]]
-        visited.add(self.vertices[0])
+        queue = [self._vertices[0]]
+        visited.add(self._vertices[0])
         
         while queue:
             vtx = queue.pop(0)
@@ -225,7 +271,7 @@ class Graph:
                     visited.add(adj)
                     queue.append(adj)
                     
-        return len(visited) == len(self.vertices)
+        return len(visited) == len(self._vertices)
     
     def is_unconnected(self):
         return not self.is_connected()
@@ -239,41 +285,30 @@ class Graph:
             vertices_to_delete: A list of vertices to be removed from this graph.
         """
         for vtx in vertices_to_delete:
-            if vtx in self.vertices:
+            if vtx in self._vertices:
                 neighbors = list(vtx.adj)
                 for neighbor in neighbors:
-                    if neighbor in self.degrees:
-                        self.degrees[neighbor] -= 1
+                    if neighbor in self._degrees:
+                        self._degrees[neighbor] -= 1
                     if vtx in neighbor.adj:
                         neighbor.adj.remove(vtx)
                 
-                self.vertices.remove(vtx)
-                self.degrees.pop(vtx, None)
+                self._vertices.remove(vtx)
+                self._degrees.pop(vtx, None)
                 
-                for edge in self.edges[:]:
+                for edge in self._edges[:]:
                     if vtx in edge:
-                        print(f"Deleting {edge.to_string()}")
-                        self.edges.remove(edge)
+                        self._edges.remove(edge)
                         
-        self.update_degree_sequence()
+        self._update_degree_sequence()
         
     def delete_edges(self, edges_to_delete : list):
         for edge in edges_to_delete:
-            if edge in self.edges:
-                self.remove_edge(edge)
-                
-    def remove_edge(self, edge : Edge):
-        self.degrees[edge.vtx1] -= 1
-        self.degrees[edge.vtx2] -= 1
-                
-        edge.vtx1.adj.remove(edge.vtx2)
-        edge.vtx2.adj.remove(edge.vtx1)
-                
-        self.edges.remove(edge)
-        self.update_degree_sequence()
+            if edge in self._edges:
+                self._remove_edge(edge)
             
     def build_complement(self) -> Graph:
-        cmp_vertices = copy.deepcopy(self.vertices)
+        cmp_vertices = copy.deepcopy(self._vertices)
         complement = Graph(cmp_vertices, [])
         for i, vtx in enumerate(cmp_vertices):
             for j, other in enumerate(cmp_vertices):
@@ -282,14 +317,14 @@ class Graph:
                 
                 cmp_edge = Edge(vtx, other)
                 
-                if cmp_edge not in self.edges:
+                if cmp_edge not in self._edges:
                     complement.add_connection(i, j)
                     
         return complement
     
     def inducted_by(self, vertices: list) -> Graph:
         for vtx in vertices:
-            if vtx not in self.vertices:
+            if vtx not in self._vertices:
                 raise ValueError()
 
         edges = set()
@@ -308,7 +343,7 @@ class Graph:
         return Graph(new_vertices, new_edges)
         
     def lines_graph(self) -> Graph:
-        line_vertices = [Vertex(edge, set()) for edge in self.edges]
+        line_vertices = [Vertex(edge, set()) for edge in self._edges]
         graph = Graph(line_vertices, [])
         
         degree = len(line_vertices)
@@ -327,9 +362,9 @@ class Graph:
         order = self.get_order()
         matrix = np.zeros((order, order), dtype=int)
 
-        index = {vtx: idx for idx, vtx in enumerate(self.vertices)}
+        index = {vtx: idx for idx, vtx in enumerate(self._vertices)}
 
-        for vtx in self.vertices:
+        for vtx in self._vertices:
             idx = index[vtx]
             for utx in vtx.adj:
                 jdx = index[utx]
@@ -337,8 +372,8 @@ class Graph:
 
         return pd.DataFrame(
             matrix,
-            columns=[vtx.value for vtx in self.vertices],
-            index=[vtx.value for vtx in self.vertices]
+            columns=[vtx.value for vtx in self._vertices],
+            index=[vtx.value for vtx in self._vertices]
         )        
         
     def build_inc_matrix(self) -> pd.DataFrame:
@@ -347,17 +382,17 @@ class Graph:
 
         matrix = np.zeros((order, size), dtype=int)
 
-        vtx_index = {vtx: i for i, vtx in enumerate(self.vertices)}
+        vtx_index = {vtx: i for i, vtx in enumerate(self._vertices)}
 
-        for eidx, edge in enumerate(self.edges):
+        for eidx, edge in enumerate(self._edges):
             for vtx in edge:  
                 vidx = vtx_index[vtx]
                 matrix[vidx, eidx] = 1
 
         return pd.DataFrame(
             matrix,
-            columns=[str(edge) for edge in self.edges],
-            index=[vtx.value for vtx in self.vertices]
+            columns=[str(edge) for edge in self._edges],
+            index=[vtx.value for vtx in self._vertices]
         )
         
     def distance_between(self, vtx: Vertex, utx: Vertex) -> int:
@@ -382,25 +417,22 @@ class Graph:
     def diameter(self) -> int:
         if not self.is_connected():
             return float('inf')
-        return max(self.eccentricity(vtx) for vtx in self.vertices)
+        return max(self.eccentricity(vtx) for vtx in self._vertices)
     
     def radius(self) -> int:
         if not self.is_connected():
             return float('inf')
-        return min(self.eccentricity(vtx) for vtx in self.vertices)
+        return min(self.eccentricity(vtx) for vtx in self._vertices)
     
     def eccentricity(self, vtx: Vertex) -> int:
         max_dist = 0
-        for utx in self.vertices:
+        for utx in self._vertices:
             max_dist = max(max_dist, self.distance_between(vtx, utx))
         return max_dist
-
-    def update_degree_sequence(self):
-        self.degree_sequence = sorted(self.degrees.values(), reverse=True)
                         
     def count_same_degree(self, desired_degree: int) -> int:
         counter = 0
-        for vtx_dg in self.degrees.values():
+        for vtx_dg in self._degrees.values():
             if vtx_dg == desired_degree:
                 counter += 1
         return counter
@@ -412,30 +444,41 @@ class Graph:
         return self.eccentricity(vtx) == self.diameter()
     
     def center(self) -> list:
-        return [vtx for vtx in self.vertices if self.is_central(vtx)]
+        return [vtx for vtx in self._vertices if self.is_central(vtx)]
 
     def periphery(self) -> list:
-        return [vtx for vtx in self.vertices if self.is_peripheral(vtx)]
+        return [vtx for vtx in self._vertices if self.is_peripheral(vtx)]
     
     def get_vertex(self, value):
-        return next((vtx for vtx in self.vertices if vtx.value == value), None)
+        return next((vtx for vtx in self._vertices if vtx.value == value), None)
     
     def is_cutoff_point(self, vtx: Vertex) -> bool:
         if not self.is_connected():
             return False
         cutted_graph = self.clone()
-        cutted_graph.delete_vertices([cutted_graph.vertices[self.vertices.index(vtx)]])
+        cutted_graph.delete_vertices([cutted_graph._vertices[self._vertices.index(vtx)]])
+        return not cutted_graph.is_connected()
+    
+    def cut_vertices(self) -> list:
+        return [vtx for vtx in self._vertices if self.is_cutoff_point(vtx)]
+
+    def is_bridge(self, edge: Edge) -> bool:
+        if not self.is_connected():
+            return False
+        cutted_graph = self.clone()
+        idx = self._edges.index(edge)
+        cutted_graph.delete_edges([cutted_graph._edges[idx]])
         return not cutted_graph.is_connected()
         
     def clone(self) -> Graph:
         return copy.deepcopy(self)
         
     def show_edges(self):
-        for edge in self.edges:
+        for edge in self._edges:
             print(edge.to_string())
             
     def show_degrees(self):
-        for vtx, dg in self.degrees.items():
+        for vtx, dg in self._degrees.items():
             print((f"({vtx} : {dg})"))
             
     def show_degree_sequence(self):
