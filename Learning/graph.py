@@ -379,15 +379,20 @@ class Graph:
         
         return float('inf')
     
-    def diameter(self):
+    def diameter(self) -> int:
         if not self.is_connected():
             return float('inf')
-        
+        return max(self.eccentricity(vtx) for vtx in self.vertices)
+    
+    def radius(self) -> int:
+        if not self.is_connected():
+            return float('inf')
+        return min(self.eccentricity(vtx) for vtx in self.vertices)
+    
+    def eccentricity(self, vtx: Vertex) -> int:
         max_dist = 0
-        for idx, vtx in enumerate(self.vertices):
-            for utx in self.vertices[idx + 1:]:
-                max_dist = max(max_dist, self.distance_between(vtx, utx))
-        
+        for utx in self.vertices:
+            max_dist = max(max_dist, self.distance_between(vtx, utx))
         return max_dist
 
     def update_degree_sequence(self):
