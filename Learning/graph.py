@@ -405,6 +405,18 @@ class Graph:
                 counter += 1
         return counter
     
+    def is_central(self, vtx: Vertex) -> bool:
+        return self.eccentricity(vtx) == self.radius()
+    
+    def is_peripheral(self, vtx: Vertex):
+        return self.eccentricity(vtx) == self.diameter()
+    
+    def center(self) -> list:
+        return [vtx for vtx in self.vertices if self.is_central(vtx)]
+
+    def periphery(self) -> list:
+        return [vtx for vtx in self.vertices if self.is_peripheral(vtx)]
+    
     def get_vertex(self, value):
         return next((vtx for vtx in self.vertices if vtx.value == value), None)
         
