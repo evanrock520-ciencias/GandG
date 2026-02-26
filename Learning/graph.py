@@ -16,25 +16,50 @@ class Graph:
                 raise ValueError("There are edges with invalid vertices.")
     
         self._degrees = {vtx: vtx.get_degree() for vtx in vertices}
-        self.degree_sequence = None
+        self._degree_sequence = None
         self._update_degree_sequence()
         
     @property
     def vertices(self):
+        """The vertices of the graph"""
         return list(self._vertices)
     
     @property
     def edges(self):
+        """The edges of the graph"""
         return list(self._edges)
     
     @property
     def degrees(self):
-        return list(self._degrees)
+        """The degrees of every vertex"""
+        return dict(self._degrees)
+    
+    @property
+    def degree_sequence(self):
+        """The degrees sequence of the graph"""
+        self._update_degree_sequence()
+        return list(self._degree_sequence)
+    
+    @property
+    def order(self):
+        """The order of the graph. How many vertex there are in the graph."""
+        return len(self._vertices)
+    
+    @property
+    def size(self):
+        """The size of the graph. How many edges there are in the graph."""
+        return len(self._edges)
     
     def _update_degree_sequence(self):
-        self.degree_sequence = sorted(self._degrees.values(), reverse=True)
+        """Updates the degree sequence with the degrees dict values."""
+        self._degree_sequence = sorted(self._degrees.values(), reverse=True)
         
     def _remove_edge(self, edge : Edge):
+        """
+        Removes an edge from the graph.
+        Args:
+            edge: The edge we want to remove from the graph.
+        """
         self._degrees[edge.vtx1] -= 1
         self._degrees[edge.vtx2] -= 1
                 
@@ -47,81 +72,65 @@ class Graph:
     def add_vertex(self, vtx : Vertex):
         """
         Add a vertex to the graph.
-        
         Args:
             vtx: The vertex we want to add to the graph.
             
         """
+        vtx.adj.clear()
         self._vertices.append(vtx)
         self._degrees[vtx] = vtx.get_degree()
         self._update_degree_sequence()
         
-    def add_connection(self, idx1, idx2):
+    def add_connection(self, a, b):
         """
         Creates an edge with 2 vertex.
-        
         Args:
-                idx1: The index of the first vertex in self.vertices
-                idx2: The index of the second vertex in self.vertices
-            
+            a: Could be a index to find a vertex in the graph vertices or a vertex itself.
+            b: Could be a index to find a vertex in the graph vertices or a vertex itself.
         """
-        edge = Edge(self._vertices[idx1], self._vertices[idx2])
-        
+        vtx = self._vertices[a] if isinstance(a, int) else a
+        utx = self._vertices[b] if isinstance(b, int) else b
+
+        edge = Edge(vtx, utx)
+            
         if edge in self._edges:
-            # print(f"The edge {edge.to_string()} is alredy in edges")
             return
         
-        self._vertices[idx1].add_adj(self._vertices[idx2])
-        self._vertices[idx2].add_adj(self._vertices[idx1])
+        vtx.add_adj(utx)
+        utx.add_adj(vtx)
         
-        self._degrees[self._vertices[idx1]] += 1
-        self._degrees[self._vertices[idx2]] += 1
+        self._degrees[vtx] += 1
+        self._degrees[utx] += 1
         
         self._edges.append(edge)
         self._update_degree_sequence()
-        
-    def get_order(self) -> int:
-        """
-        Returns:
-            int: The order of the graph. How many vertex there are in the graph.
-        """
-        return len(self._vertices)
-    
-    def get_size(self) -> int:
-        """
-        Returns:
-            int: The size of the graph. How many edges there are in the graph.
-        """
-        return len(self._edges)
     
     def get_total_degree(self) -> int:
         """
         Returns:
             int: The sum of the degree sequence.
         """
-        return sum(self.degree_sequence)
+        return sum(self._degree_sequence)
     
     def get_gamma_degree(self) -> int:
         """
         Returns: 
             int: The min degree in the degree sequence of the graph.
         """
-        return min(self.degree_sequence)
+        return min(self._degree_sequence)
     
     def get_delta_degree(self) -> int:
         """
         Returns:
             int: The max degree in the degree sequence of the graph.
         """
-        return max(self.degree_sequence)
+        return max(self._degree_sequence)
     
     def is_subgraph(self, graph : Graph) -> bool:
         """
         Determines if the given graph is a subgraph of this graph.
-        
         Args: 
             graph: The given graph.
-        
         Returns:
             bool: If the given graph is a subgraph of this graph.
         """
@@ -151,22 +160,27 @@ class Graph:
         return True
     
     def is_regular(self):
-        if len(self.degree_sequence) == 0:
+        """
+        Determines if all the vertices have the same degree.
+        """
+        if len(self._degree_sequence) == 0:
             return True
         
-        fixed_value = self.degree_sequence[0]
+        fixed_value = self._degree_sequence[0]
         
-        for value in self.degree_sequence:
+        for value in self._degree_sequence:
             if value != fixed_value:
                 return False
             
         return True
     
     def is_complete(self):
-        order = self.get_order()
-        return self.get_size() == (order * (order - 1)) / 2
+        """Determines if the graph has all the posible combinations of edges."""
+        order = self.order
+        return self.size == (order * (order - 1)) // 2
     
     def is_bipartite(self):
+        """Determines if the graph could be bipartite."""
         return self.get_bipartition() is not None
     
     def get_bipartition(self) -> tuple:
@@ -196,7 +210,7 @@ class Graph:
         X, Y = self.get_bipartition()
         for vtx in X:
             for utx in Y:
-                if not Edge(vtx, utx) in self._edges():
+                if not Edge(vtx, utx) in self._edges:
                     return False
                 
         return True
@@ -359,7 +373,7 @@ class Graph:
         return graph
         
     def build_adj_matrix(self) -> pd.DataFrame:
-        order = self.get_order()
+        order = self.order
         matrix = np.zeros((order, order), dtype=int)
 
         index = {vtx: idx for idx, vtx in enumerate(self._vertices)}
@@ -377,8 +391,8 @@ class Graph:
         )        
         
     def build_inc_matrix(self) -> pd.DataFrame:
-        order = self.get_order()
-        size = self.get_size()
+        order = self.order
+        size = self.size
 
         matrix = np.zeros((order, size), dtype=int)
 
@@ -483,7 +497,7 @@ class Graph:
             
     def show_degree_sequence(self):
         sequence = '('
-        for dg in self.degree_sequence:
+        for dg in self._degree_sequence:
             sequence += f'{dg},'
         sequence += ')'
         
