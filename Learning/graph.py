@@ -21,22 +21,22 @@ class Graph:
         
     @property
     def vertices(self):
-        """The vertices of the graph"""
+        """The vertices of the graph."""
         return list(self._vertices)
     
     @property
     def edges(self):
-        """The edges of the graph"""
+        """The edges of the graph."""
         return list(self._edges)
     
     @property
     def degrees(self):
-        """The degrees of every vertex"""
+        """The degrees of every vertex."""
         return dict(self._degrees)
     
     @property
     def degree_sequence(self):
-        """The degrees sequence of the graph"""
+        """The degrees sequence of the graph."""
         self._update_degree_sequence()
         return list(self._degree_sequence)
     
@@ -145,24 +145,27 @@ class Graph:
         return True
     
     def is_independent(self, vertices: list):
+        """
+        Determines if the given vertices of the graph are independent (There are no edges between any two vertices).
+        Args:
+            vertices: A list of vertices of the graph.
+        """
         for vtx in vertices:
             if vtx not in self._vertices:
                 return False
 
-        for i in range(len(vertices)):
-            for j in range(i + 1, len(vertices)):
-                v = vertices[i]
-                u = vertices[j]
+        for idx in range(len(vertices)):
+            for jdx in range(idx + 1, len(vertices)):
+                vtx = vertices[idx]
+                utx = vertices[jdx]
 
-                if Edge(v, u) in self._edges:
+                if Edge(vtx, utx) in self._edges:
                     return False
 
         return True
     
     def is_regular(self):
-        """
-        Determines if all the vertices have the same degree.
-        """
+        """Determines if all the vertices have the same degree."""
         if len(self._degree_sequence) == 0:
             return True
         
@@ -271,6 +274,7 @@ class Graph:
         return len(vertices) == len(set(vertices)) 
     
     def is_connected(self):
+        """Determines if there are a walk between any two vertices."""
         if len(self._vertices) == 0:
             return True
         
@@ -286,6 +290,9 @@ class Graph:
                     queue.append(adj)
                     
         return len(visited) == len(self._vertices)
+    
+    def is_biconnected(self):
+        return self.is_connected() and len(self.cut_vertices()) == 0
     
     def is_unconnected(self):
         return not self.is_connected()
@@ -485,6 +492,10 @@ class Graph:
         return not cutted_graph.is_connected()
         
     def clone(self) -> Graph:
+        """
+        Returns:
+            Graph: A copy of this graph.
+        """
         return copy.deepcopy(self)
         
     def show_edges(self):

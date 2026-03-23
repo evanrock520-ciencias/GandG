@@ -15,7 +15,9 @@ class Controller:
     @staticmethod
     def havel_hakimi(degrees: list) -> bool:
         degrees = sorted([dg for dg in degrees if dg > 0], reverse=True)
-            
+        
+        print("Before: " + str(degrees))        
+        
         if not degrees:
             return True
             
@@ -28,6 +30,7 @@ class Controller:
             if degrees[idx] < 0:
                 return False
                 
+        print("After: " + str(degrees))
         return Controller.havel_hakimi(degrees)
     
     @staticmethod
